@@ -2,7 +2,7 @@
 
 **Table Of Contents**
 - [Description](#description)
-- [How does this sample work?](#how-does-this-sample-work)
+- [How does this work?](#how-does-this-work)
 - [Prerequisites](#prerequisites)
 - [Running the sample](#running-the-sample)
 - [Additional resources](#additional-resources)
@@ -14,7 +14,7 @@
 
 This sample, yolov3_onnx, implements a full ONNX-based pipeline for performing inference with the YOLOv3 network, with an input size of 608 x 608 pixels, including pre and post-processing. This sample is based on the [YOLOv3-608](https://pjreddie.com/media/files/papers/YOLOv3.pdf) paper.
 
-## How does this sample work?
+## How does this work?
 
 First, the original YOLOv3 specification from the paper is converted to the Open Neural Network Exchange (ONNX) format in `yolov3_to_onnx.py` (only has to be done once).
 
@@ -33,78 +33,30 @@ For specific software versions, see the [TensorRT Installation Guide](https://do
     python3 -m pip install -r requirements.txt
     ```
 
-2.  Download sample data. See the "Download Sample Data" section of [the general setup guide](../README.md).
+2.  Download sample data. 
 
+    ```sh
+    python3 download.py
+    ```
+
+    This will download the config file, weights, testing image and video
 
 ## Running the sample
 
-The data directory needs to be specified (either via `-d /path/to/data` or environment varaiable `TRT_DATA_DIR`)
-when running these scripts. An error will be thrown if not.
-
 1.  Create an ONNX version of YOLOv3 with the following command.
     ```sh
-    python3 yolov3_to_onnx.py
+    python3 yolov3_to_onnx.py -c <path to config file> -w <path to weight file> -o <path to output onnx model>
     ```
-    When running the above command for the first time, the output should look similar to the following:
-    ```
-    [...]
-    %106_convolutional = Conv[auto_pad = u'SAME_LOWER', dilations = [1, 1], kernel_shape = [1, 1], strides = [1, 1]]
-    (%105_convolutional_lrelu, %106_convolutional_conv_weights, %106_convolutional_conv_bias)
-    return %082_convolutional, %094_convolutional,%106_convolutional
-    }
+
+    ```sh
+    python3 yolov3_to_onnx.py -c yolov3.cfg -w yolov3.weights -o yolov3.onnx
     ```
 
 2.  Build a TensorRT engine from the generated ONNX file and run inference on a sample image
     ```sh
-    python3 onnx_to_tensorrt.py
-    ```
-    When running the above command for the first time, the output should look similar to the following:
-    ```
-    Building an engine from file yolov3.onnx, this may take a while...
-    Running inference on image dog.jpg...
-    Saved image with bounding boxes of detected objects to dog_bboxes.jpg.
+    python3 onnx_to_tensorrt.py -o <path to onnx model> -e <path to the engine file> -i <path to the input video file> -f <number of frames to run the script>
     ```
 
-3.  Verify that the sample ran successfully. If the sample runs successfully you should see output similar to the following:
+    ```sh
+    python3 onnx_to_tensorrt.py -o yolov3.onnx -e yolov3.trt -i test_video.mp4 -f 100
     ```
-    Loading ONNX file from path yolov3.onnx...
-    Beginning ONNX file parsing
-    Completed parsing of ONNX file
-    Building an engine from file yolov3.onnx; this may take a while...
-    Completed creating Engine
-    Running inference on image dog.jpg...
-    [[135.14841333 219.59879284 184.30209195 324.0265199 ]
-      [ 98.30805074 135.72613533 499.71263299 299.25579652]
-      [478.00605802 81.25702449 210.57787895 86.91502688]] [0.99854713 0.99880403 0.93829258] [16 1 7]
-    Saved image with bounding boxes of detected objects to dog_bboxes.png.
-    ```
-    You should be able to visually confirm whether the detection was correct.
-
-# Additional resources
-
-The following resources provide a deeper understanding about the model used in this sample, as well as the dataset it was trained on:
-
-**Model**
-- [YOLOv3: An Incremental Improvement](https://pjreddie.com/media/files/papers/YOLOv3.pdf)
-
-**Dataset**
-- [COCO dataset](http://cocodataset.org/#home)
-
-**Documentation**
-- [YOLOv3-608 paper](https://pjreddie.com/media/files/papers/YOLOv3.pdf)
-- [Introduction To NVIDIA’s TensorRT Samples](https://docs.nvidia.com/deeplearning/sdk/tensorrt-sample-support-guide/index.html#samples)
-- [Working With TensorRT Using The Python API](https://docs.nvidia.com/deeplearning/sdk/tensorrt-developer-guide/index.html#python_topics)
-- [NVIDIA’s TensorRT Documentation Library](https://docs.nvidia.com/deeplearning/sdk/tensorrt-archived/index.html)
-
-# License
-
-For terms and conditions for use, reproduction, and distribution, see the [TensorRT Software License Agreement](https://docs.nvidia.com/deeplearning/sdk/tensorrt-sla/index.html) documentation.
-
-# Changelog
-
-March 2019
-This `README.md` file was recreated, updated and reviewed.
-
-# Known issues
-
-There are no known issues in this sample.

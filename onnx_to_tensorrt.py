@@ -127,8 +127,6 @@ def main():
                         help="File path to the onnx model")
     parser.add_argument('-e', '--engine', type=str,
                         help="File path to store the engine")
-    parser.add_argument('-i', '--image', type=str,
-                        help="File path to the image")
     parser.add_argument('-v', '--video', type=str,
                         help="Path to the video file")
     parser.add_argument('-f', '--frame', type=int,
@@ -173,12 +171,12 @@ def main():
         print("Removing the already existing the result.avi")
         os.remove("result.avi")
 
+    input_video_fps = int(input_video.get(cv2.CAP_PROP_FPS))
     output_video_writer = cv2.VideoWriter(
-        'result.avi', cv2.VideoWriter_fourcc(*'MJPG'), 10, frame_size)
+        'result.avi', cv2.VideoWriter_fourcc(*'MJPG'), input_video_fps, frame_size)
 
     frame_count = 0
 
-    input_video_fps = int(input_video.get(cv2.CAP_PROP_FPS))
 
     # testing row major
     with get_engine(onnx_file_path, engine_file_path) as engine, engine.create_execution_context() as context:
