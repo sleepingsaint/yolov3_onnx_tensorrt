@@ -131,6 +131,7 @@ def main():
                         help="Path to the video file")
     parser.add_argument('-f', '--frame', type=int,
                         help="Number of frames to run the script")
+    parser.add_argument('-s', '--save', type=str, default="result.avi", help="Path to save the output result")
     args = parser.parse_args()
 
     # Try to load a previously generated YOLOv3-608 network graph in ONNX format:
@@ -167,13 +168,13 @@ def main():
 
     frame_size = (int(frame_width), int(frame_height))
 
-    if os.path.exists("result.avi"):
-        print("Removing the already existing the result.avi")
-        os.remove("result.avi")
+    if os.path.exists(args.save):
+        print(f"Removing the already existing the {args.save}")
+        os.remove(args.save)
 
     input_video_fps = int(input_video.get(cv2.CAP_PROP_FPS))
     output_video_writer = cv2.VideoWriter(
-        'result.avi', cv2.VideoWriter_fourcc(*'MJPG'), input_video_fps, frame_size)
+        args.save, cv2.VideoWriter_fourcc(*'MJPG'), input_video_fps, frame_size)
 
     frame_count = 0
 

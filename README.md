@@ -5,10 +5,7 @@
 - [How does this work?](#how-does-this-work)
 - [Prerequisites](#prerequisites)
 - [Running the sample](#running-the-sample)
-- [Additional resources](#additional-resources)
-- [License](#license)
-- [Changelog](#changelog)
-- [Known issues](#known-issues)
+
 
 ## Description
 
@@ -54,9 +51,9 @@ For specific software versions, see the [TensorRT Installation Guide](https://do
 
 2.  Build a TensorRT engine from the generated ONNX file and run inference on a sample image
     ```sh
-    python3 onnx_to_tensorrt.py -o <path to onnx model> -e <path to the engine file> -i <path to the input video file> -f <number of frames to run the script>
+    python3 onnx_to_tensorrt.py -o <path to onnx model> -e <path to the engine file> -i <path to the input video file> -f <number of frames to run the script> -s <path to save the result>
     ```
 
     ```sh
-    python3 onnx_to_tensorrt.py -o yolov3.onnx -e yolov3.trt -i test_video.mp4 -f 100
+    python3 onnx_to_tensorrt.py -o yolov3.onnx -e yolov3.trt -i test_video.mp4 -f 100 -s result.avi
     ```
