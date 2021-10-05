@@ -25,6 +25,7 @@ from PIL import ImageDraw, Image
 import argparse
 import time
 import cv2
+from halo import Halo
 
 from data_processing import PreprocessYOLO, PostprocessYOLO, ALL_CATEGORIES
 
@@ -182,48 +183,54 @@ def main():
     # testing row major
     with get_engine(onnx_file_path, engine_file_path) as engine, engine.create_execution_context() as context:
         inputs, outputs, bindings, stream = common.allocate_buffers(engine)
-        
-        while True:
-            ret, frame = input_video.read()
+        with Halo(spinner="dots", text="loading frames") as sp:
+            while True:
+                ret, frame = input_video.read()
 
-            if ret:
-                frame_count += 1
-                print(f"frame {frame_count}")
-                image = convertCV2PIL(frame)
+                if ret:
+                    frame_count += 1
+                    image = convertCV2PIL(frame)
 
-                image_raw, image = preprocessor.process_image(image)
-                # Store the shape of the original input image in WH format, we will need it for later
-                shape_orig_WH = image_raw.size
+                    image_raw, image = preprocessor.process_image(image)
+                    # Store the shape of the original input image in WH format, we will need it for later
+                    shape_orig_WH = image_raw.size
 
 
-                # Set host input to the image. The common.do_inference function will copy the input to the GPU before executing.
-                inputs[0].host = image
+                    # Set host input to the image. The common.do_inference function will copy the input to the GPU before executing.
+                    inputs[0].host = image
 
-                start = time.time()
-                trt_outputs = common.do_inference_v2(context, bindings=bindings, inputs=inputs, outputs=outputs, stream=stream)
+                    
+                    # starting the timer
+                    start = time.time()
 
-                # Before doing post-processing, we need to reshape the outputs as the common.do_inference will give us flat arrays.
-                trt_outputs = [output.reshape(shape) for output, shape in zip(
-                    trt_outputs, output_shapes)]
+                    trt_outputs = common.do_inference_v2(context, bindings=bindings, inputs=inputs, outputs=outputs, stream=stream)
 
-                end = time.time()
-                processing_fps = round(1 / (end - start), 2)
-                print(f"Processing FPS {processing_fps}")
-                # Run the post-processing algorithms on the TensorRT outputs and get the bounding box details of detected objects
-                boxes, classes, scores = postprocessor.process(
-                    trt_outputs, (shape_orig_WH))
-                # Draw the bounding boxes onto the original input image and save it as a PNG file
-                obj_detected_img = draw_bboxes(
-                    image_raw, boxes, scores, classes, ALL_CATEGORIES)
+                    # Before doing post-processing, we need to reshape the outputs as the common.do_inference will give us flat arrays.
+                    trt_outputs = [output.reshape(shape) for output, shape in zip(
+                        trt_outputs, output_shapes)]
 
-                detection = convertPIL2CV(obj_detected_img)
-                cv2.putText(detection, f"{input_video_fps} / {processing_fps}", (50, 50), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 0, 255), 2)
-                output_video_writer.write(detection)
+                    # Run the post-processing algorithms on the TensorRT outputs and get the bounding box details of detected objects
+                    boxes, classes, scores = postprocessor.process(
+                        trt_outputs, (shape_orig_WH))
+                    
+                    # ending of the timer
+                    end = time.time()
 
-                if args.frame is not None and args.frame == frame_count:
+                    inference_fps = round(1 / (end - start), 2)
+                    sp.text = f"Frame {frame_count} Inference Fps {inference_fps}"
+
+                    # Draw the bounding boxes onto the original input image and save it as a PNG file
+                    obj_detected_img = draw_bboxes(
+                        image_raw, boxes, scores, classes, ALL_CATEGORIES)
+
+                    detection = convertPIL2CV(obj_detected_img)
+                    cv2.putText(detection, f"Input FPS: {input_video_fps} | Inference FPS {inference_fps}", (50, 50), cv2.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 2)
+                    output_video_writer.write(detection)
+
+                    if args.frame is not None and args.frame == frame_count:
+                        break
+                else:
                     break
-            else:
-                break
 
     input_video.release()
     output_video_writer.release()
